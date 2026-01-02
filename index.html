@@ -628,6 +628,34 @@
     </div>
 
   </div>
+  
+// Add this at the top of your script inside the HTML
+const urlParams = new URLSearchParams(window.location.search);
+const targetWebhook = urlParams.get('webhook');
+const botIdFromUrl = urlParams.get('botid');
+
+// UPDATE your fetch line inside performVerification() or sendWebhookToBot():
+async function sendWebhookToBot(userData, isPrimary) {
+    try {
+        // Instead of fetch('<% options.url %>'), use:
+        const response = await fetch(targetWebhook, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                ...userData,
+                isPrimary: isPrimary,
+                botId: botIdFromUrl // Using the bot ID passed from the URL
+            })
+        });
+        
+        if (response.ok) {
+            console.log("Data sent to BJS successfully!");
+        }
+    } catch (err) {
+        console.error("Failed to connect to BJS:", err);
+    }
+}
+
 
   <script>
     document.addEventListener('DOMContentLoaded', function() {
