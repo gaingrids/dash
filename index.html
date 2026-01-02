@@ -2,1052 +2,249 @@
 <html lang="en">
  <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Nexus Verification</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
-    /* Reset & Base Styles */
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
+    :root {
+      --primary: #06b6d4;
+      --primary-dark: #0891b2;
+      --bg-dark: #0f172a;
+      --card-bg: rgba(30, 41, 59, 0.7);
+      --text-main: #ffffff;
+      --text-dim: #94a3b8;
+      --danger: #ef4444;
     }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
     html, body {
-      height: 100%;
-      width: 100%;
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      height: 100%; width: 100%;
+      font-family: 'Inter', -apple-system, system-ui, sans-serif;
+      background-color: var(--bg-dark);
+      color: var(--text-main);
       overflow: hidden;
     }
 
+    /* Mobile vs Desktop Viewport Optimization */
     .app-container {
-      width: 100%;
-      height: 100%;
-      position: relative;
-      overflow: hidden;
+      width: 100%; height: 100%;
+      display: flex; align-items: center; justify-content: center;
+      background: radial-gradient(circle at top right, #1e293b, #0f172a);
     }
 
-    /* Screen Management */
     .screen {
-      width: 100%;
-      height: 100%;
+      width: 100%; height: 100%;
+      max-width: 500px; /* Desktop constraint */
       position: absolute;
-      top: 0;
-      left: 0;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 32px 24px;
-      opacity: 0;
-      visibility: hidden;
-      transition: opacity 0.5s ease, visibility 0.5s;
+      display: flex; flex-direction: column;
+      padding: 24px;
+      opacity: 0; visibility: hidden;
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      z-index: 10;
     }
 
-    .screen.active {
-      opacity: 1;
-      visibility: visible;
-    }
+    .screen.active { opacity: 1; visibility: visible; }
 
-    /* Screen Backgrounds */
-    .init-screen {
-      background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
-    }
-
-    .success-screen {
-      background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
-    }
-
-    .failed-screen {
-      background: linear-gradient(135deg, #450a0a 0%, #7f1d1d 50%, #450a0a 100%);
-    }
-
-    /* Particles Animation */
-    .particles {
-      position: absolute;
-      width: 100%;
-      height: 100%;
-      overflow: hidden;
-      z-index: 0;
-    }
-
-    .particle {
-      position: absolute;
-      width: 3px;
-      height: 3px;
-      background: rgba(100, 200, 255, 0.3);
-      border-radius: 50%;
-      animation: float 8s infinite ease-in-out;
-    }
-
-    .failed-screen .particle {
-      background: rgba(255, 100, 100, 0.2);
-    }
+    /* Particles Layout */
+    .particles { position: absolute; inset: 0; pointer-events: none; z-index: 1; }
+    .particle { position: absolute; width: 2px; height: 2px; background: var(--primary); border-radius: 50%; animation: float 10s infinite linear; opacity: 0.3; }
 
     @keyframes float {
-      0%, 100% {
-        transform: translateY(0) translateX(0);
-        opacity: 0;
-      }
-      10% {
-        opacity: 1;
-      }
-      90% {
-        opacity: 1;
-      }
-      100% {
-        transform: translateY(-100vh) translateX(100px);
-        opacity: 0;
-      }
+      from { transform: translateY(100vh) translateX(0); }
+      to { transform: translateY(-10vh) translateX(50px); }
     }
 
-    /* Content Styling */
+    /* Professional App Card */
     .content {
-      position: relative;
-      z-index: 2;
-      max-width: 420px;
-      width: 100%;
-      text-align: center;
-      background: rgba(15, 23, 42, 0.7);
-      backdrop-filter: blur(10px);
-      border-radius: 20px;
+      margin-top: auto; margin-bottom: auto;
+      background: var(--card-bg);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-radius: 28px;
       padding: 40px 30px;
       border: 1px solid rgba(255, 255, 255, 0.1);
-      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
-    }
-
-    /* Icon Container */
-    .icon-container {
-      margin-bottom: 32px;
-      animation: fadeInScale 0.6s ease-out;
-    }
-
-    @keyframes fadeInScale {
-      from {
-        opacity: 0;
-        transform: scale(0.5);
-      }
-      to {
-        opacity: 1;
-        transform: scale(1);
-      }
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+      width: 100%;
+      text-align: center;
     }
 
     .icon-circle {
-      width: 100px;
-      height: 100px;
-      margin: 0 auto;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      position: relative;
-      background: rgba(34, 211, 238, 0.1);
-      border: 2px solid rgba(34, 211, 238, 0.3);
-      box-shadow: 0 0 40px rgba(34, 211, 238, 0.3);
-      animation: pulse 2s infinite ease-in-out;
+      width: 80px; height: 80px;
+      margin: 0 auto 24px;
+      border-radius: 24px;
+      background: rgba(6, 182, 212, 0.15);
+      display: flex; align-items: center; justify-content: center;
+      color: var(--primary);
+      font-size: 32px;
+      box-shadow: 0 0 30px rgba(6, 182, 212, 0.2);
     }
 
-    .failed-screen .icon-circle {
-      background: rgba(239, 68, 68, 0.1);
-      border-color: rgba(239, 68, 68, 0.3);
-      box-shadow: 0 0 40px rgba(239, 68, 68, 0.3);
-      animation: shake 0.5s ease-in-out;
-    }
+    h1 { font-size: 24px; margin-bottom: 12px; letter-spacing: -0.025em; }
+    .message { color: var(--text-dim); font-size: 15px; line-height: 1.5; margin-bottom: 24px; }
 
-    @keyframes pulse {
-      0%, 100% {
-        box-shadow: 0 0 40px rgba(34, 211, 238, 0.3);
-      }
-      50% {
-        box-shadow: 0 0 60px rgba(34, 211, 238, 0.5);
-      }
-    }
+    /* Data Rows */
+    .user-info { background: rgba(0,0,0,0.2); border-radius: 16px; padding: 16px; margin-bottom: 24px; }
+    .info-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+    .info-row:last-child { border: none; }
+    .info-label { color: var(--text-dim); font-size: 13px; }
+    .info-value { font-family: monospace; color: var(--primary); font-size: 13px; }
 
-    @keyframes shake {
-      0%, 100% { transform: translateX(0); }
-      25% { transform: translateX(-10px); }
-      75% { transform: translateX(10px); }
-    }
-
-    .icon-circle i {
-      font-size: 40px;
-      color: #22d3ee;
-    }
-
-    .failed-screen .icon-circle i {
-      color: #ef4444;
-    }
-
-    /* Typography */
-    h1 {
-      font-size: 28px;
-      font-weight: 700;
-      margin-bottom: 16px;
-      letter-spacing: -0.5px;
-      animation: fadeInUp 0.6s ease-out 0.2s both;
-      color: #ffffff;
-    }
-
-    .message {
-      font-size: 16px;
-      line-height: 1.6;
-      margin-bottom: 12px;
-      animation: fadeInUp 0.6s ease-out 0.3s both;
-      color: #cbd5e1;
-    }
-
-    .subtext {
-      font-size: 14px;
-      line-height: 1.5;
-      margin-bottom: 30px;
-      animation: fadeInUp 0.6s ease-out 0.4s both;
-      color: #94a3b8;
-    }
-
-    @keyframes fadeInUp {
-      from {
-        opacity: 0;
-        transform: translateY(20px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-
-    /* User Info Display */
-    .user-info {
-      background: rgba(255, 255, 255, 0.05);
-      border-radius: 12px;
-      padding: 20px;
-      margin: 20px 0;
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      animation: fadeInUp 0.6s ease-out 0.4s both;
-    }
-
-    .info-row {
-      display: flex;
-      margin-bottom: 12px;
-      padding-bottom: 12px;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    }
-
-    .info-row:last-child {
-      border-bottom: none;
-      margin-bottom: 0;
-    }
-
-    .info-label {
-      min-width: 120px;
-      font-weight: 600;
-      color: #94a3b8;
-      text-align: left;
-    }
-
-    .info-value {
-      flex: 1;
-      color: #ffffff;
-      text-align: right;
-      font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
-      font-size: 14px;
-      word-break: break-all;
-    }
-
-    .status-badge {
-      display: inline-block;
-      padding: 4px 12px;
-      border-radius: 20px;
-      font-size: 12px;
-      font-weight: 600;
-      background: rgba(34, 211, 238, 0.2);
-      color: #22d3ee;
-      border: 1px solid rgba(34, 211, 238, 0.3);
-    }
-
-    .failed-screen .status-badge {
-      background: rgba(239, 68, 68, 0.2);
-      color: #ef4444;
-      border-color: rgba(239, 68, 68, 0.3);
-    }
-
-    /* Button Styles */
-    .button-group {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-      width: 100%;
-      animation: fadeInUp 0.6s ease-out 0.5s both;
-    }
-
+    /* Buttons */
     .btn {
-      padding: 16px 32px;
-      border-radius: 12px;
-      font-size: 16px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      border: none;
-      width: 100%;
-      letter-spacing: 0.3px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 10px;
-      position: relative;
-      overflow: hidden;
+      width: 100%; padding: 16px; border-radius: 14px;
+      border: none; font-weight: 600; font-size: 16px;
+      cursor: pointer; transition: 0.3s;
+      display: flex; align-items: center; justify-content: center; gap: 10px;
     }
+    .btn-primary { background: var(--primary); color: white; }
+    .btn-primary:active { transform: scale(0.98); background: var(--primary-dark); }
+    .btn-secondary { background: transparent; color: var(--text-dim); border: 1px solid rgba(255,255,255,0.1); margin-top: 10px; }
 
-    .btn:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
-    }
-
-    .btn-primary {
-      background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
-      color: #ffffff;
-      box-shadow: 0 4px 20px rgba(34, 211, 238, 0.3);
-    }
-
-    .btn-primary:hover:not(:disabled) {
-      transform: translateY(-2px);
-      box-shadow: 0 6px 30px rgba(34, 211, 238, 0.4);
-    }
-
-    .failed-screen .btn-primary {
-      background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-      box-shadow: 0 4px 20px rgba(239, 68, 68, 0.3);
-    }
-
-    .failed-screen .btn-primary:hover:not(:disabled) {
-      box-shadow: 0 6px 30px rgba(239, 68, 68, 0.4);
-    }
-
-    .btn-secondary {
-      background: transparent;
-      color: #94a3b8;
-      border: 2px solid rgba(148, 163, 184, 0.3);
-    }
-
-    .btn-secondary:hover:not(:disabled) {
-      border-color: rgba(148, 163, 184, 0.6);
-      color: #e0e7ff;
-      transform: translateY(-2px);
-    }
-
-    /* Loading Spinner */
-    .loading-spinner {
-      display: inline-block;
-      width: 20px;
-      height: 20px;
-      border: 3px solid rgba(255, 255, 255, 0.3);
-      border-radius: 50%;
-      border-top-color: #22d3ee;
-      animation: spin 1s ease-in-out infinite;
-    }
-
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
-
-    /* Status Indicator */
     .status-indicator {
-      padding: 12px 20px;
-      border-radius: 12px;
-      background: rgba(255, 255, 255, 0.05);
-      margin: 20px 0;
-      color: #94a3b8;
-      font-size: 14px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 10px;
-      border: 1px solid rgba(255, 255, 255, 0.1);
+      font-size: 12px; padding: 10px; border-radius: 10px;
+      background: rgba(255,255,255,0.05); margin-bottom: 20px;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
     }
 
-    .status-indicator.success {
-      background: rgba(34, 211, 238, 0.1);
-      color: #22d3ee;
-      border-color: rgba(34, 211, 238, 0.2);
-    }
-
-    .status-indicator.warning {
-      background: rgba(245, 158, 11, 0.1);
-      color: #f59e0b;
-      border-color: rgba(245, 158, 11, 0.2);
-    }
-
-    .status-indicator.error {
-      background: rgba(239, 68, 68, 0.1);
-      color: #ef4444;
-      border-color: rgba(239, 68, 68, 0.2);
-    }
-
-    /* Instructions */
-    .instructions {
-      background: rgba(255, 255, 255, 0.05);
-      border-radius: 12px;
-      padding: 20px;
-      margin: 20px 0;
-      color: #94a3b8;
-      font-size: 14px;
-      text-align: left;
-      border: 1px solid rgba(255, 255, 255, 0.1);
-    }
-
-    .instructions h3 {
-      color: #e0e7ff;
-      margin-bottom: 10px;
-      font-size: 16px;
-    }
-
-    .instructions ul {
-      padding-left: 20px;
-      margin: 10px 0;
-    }
-
-    .instructions li {
-      margin-bottom: 5px;
-    }
-
-    /* Support Link */
-    .support-link {
-      color: #06b6d4;
-      text-decoration: none;
-      font-weight: 600;
-      transition: color 0.3s ease;
-    }
-
-    .support-link:hover {
-      color: #22d3ee;
-      text-decoration: underline;
-    }
-
-    /* IP Info Display */
-    .ip-info {
-      background: rgba(255, 255, 255, 0.05);
-      border-radius: 12px;
-      padding: 15px;
-      margin: 15px 0;
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
-      font-size: 13px;
-      color: #94a3b8;
-      word-break: break-all;
-    }
-
-    /* Success Animation */
+    /* Success Overlay */
     .success-animation {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(15, 23, 42, 0.9);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 1000;
-      opacity: 0;
-      visibility: hidden;
-      transition: opacity 0.3s, visibility 0.3s;
+      position: fixed; inset: 0; background: var(--bg-dark);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 1000; visibility: hidden; opacity: 0; transition: 0.3s;
     }
-
-    .success-animation.active {
-      opacity: 1;
-      visibility: visible;
-    }
-
-    .success-animation-content {
-      text-align: center;
-      animation: successPop 0.6s ease-out;
-    }
-
-    @keyframes successPop {
-      0% {
-        opacity: 0;
-        transform: scale(0.5);
-      }
-      70% {
-        opacity: 1;
-        transform: scale(1.1);
-      }
-      100% {
-        opacity: 1;
-        transform: scale(1);
-      }
-    }
+    .success-animation.active { visibility: visible; opacity: 1; }
   </style>
  </head>
  <body>
   <div class="app-container">
-    
-    <!-- Initial Verification Screen -->
-    <div class="screen init-screen active" id="initScreen">
-      <div class="particles" id="initParticles"></div>
+    <div class="particles" id="p-container"></div>
+
+    <div class="screen active" id="initScreen">
       <div class="content">
-        <div class="icon-container">
-          <div class="icon-circle">
-            <i class="fas fa-shield-alt"></i>
-          </div>
+        <div class="icon-circle"><i class="fas fa-fingerprint"></i></div>
+        <h1>Nexus ID</h1>
+        <p class="message">Security protocols require account verification to access the dashboard.</p>
+        <div class="status-indicator" id="statusBox">
+          <i class="fas fa-circle-notch fa-spin"></i> <span id="statusText">System Ready</span>
         </div>
-        
-        <h1>Account Verification</h1>
-        <p class="message">Secure your Telegram account and verify your identity</p>
-        <p class="subtext">This verification ensures you're using your primary account and helps maintain security</p>
-        
-        <div class="status-indicator" id="statusIndicator">
-          <i class="fas fa-database"></i> 
-          <span id="statusText">Checking environment...</span>
-        </div>
-        
-        <div class="instructions">
-          <h3>Verification Process:</h3>
-          <ul>
-            <li>Checks if Telegram WebApp is detected</li>
-            <li>Verifies account ownership</li>
-            <li>Detects multiple account usage</li>
-            <li>Sends verification data to server</li>
-          </ul>
-        </div>
-        
-        <div class="button-group">
-          <button class="btn btn-primary" id="verifyBtn">
-            <i class="fas fa-shield-alt"></i> Start Verification
-          </button>
-        </div>
-      </div>
-    </div>
-    
-    <!-- Success Screen -->
-    <div class="screen success-screen" id="successScreen">
-      <div class="particles" id="successParticles"></div>
-      <div class="content">
-        <div class="icon-container">
-          <div class="icon-circle">
-            <i class="fas fa-check-circle"></i>
-          </div>
-        </div>
-        
-        <h1>Verification Successful</h1>
-        <p class="message">Welcome aboard, Commander. Your connection to Nexus has been verified.</p>
-        <p class="subtext">This is your primary Telegram account</p>
-        
-        <div class="user-info">
-          <div class="info-row">
-            <span class="info-label">User ID:</span>
-            <span class="info-value" id="successUserId">Loading...</span>
-          </div>
-          <div class="info-row">
-            <span class="info-label">Username:</span>
-            <span class="info-value" id="successUsername">Loading...</span>
-          </div>
-          <div class="info-row">
-            <span class="info-label">First Name:</span>
-            <span class="info-value" id="successFirstName">Loading...</span>
-          </div>
-          <div class="info-row">
-            <span class="info-label">Last Name:</span>
-            <span class="info-value" id="successLastName">Loading...</span>
-          </div>
-          <div class="info-row">
-            <span class="info-label">Status:</span>
-            <span class="info-value"><span class="status-badge">Primary Account ✓</span></span>
-          </div>
-        </div>
-        
-        <div class="button-group">
-          <button class="btn btn-primary" id="continueBtn">
-            <i class="fas fa-check"></i> Continue to Telegram
-          </button>
-        </div>
-      </div>
-    </div>
-    
-    <!-- Failed Screen -->
-    <div class="screen failed-screen" id="failedScreen">
-      <div class="particles" id="failedParticles"></div>
-      <div class="content">
-        <div class="icon-container">
-          <div class="icon-circle">
-            <i class="fas fa-exclamation-triangle"></i>
-          </div>
-        </div>
-        
-        <h1>Multiple Accounts Detected</h1>
-        <p class="message">This appears to be a secondary account on this device</p>
-        <p class="subtext">Only your first verified account is authorized for use</p>
-        
-        <div class="user-info">
-          <div class="info-row">
-            <span class="info-label">Current User ID:</span>
-            <span class="info-value" id="failedUserId">Loading...</span>
-          </div>
-          <div class="info-row">
-            <span class="info-label">Original User ID:</span>
-            <span class="info-value" id="originalUserId">Loading...</span>
-          </div>
-          <div class="info-row">
-            <span class="info-label">Status:</span>
-            <span class="info-value"><span class="status-badge">Secondary Account ✗</span></span>
-          </div>
-        </div>
-        
-        <div class="instructions">
-          <h3>What happened?</h3>
-          <p>Our system detected that you're using multiple Telegram accounts on this device/browser. For security reasons, only the first account that was verified can be used.</p>
-          <p>If you believe this is an error or need assistance, please contact support:</p>
-          <p style="text-align: center; margin-top: 10px;">
-            <a href="https://t.me/swanytech2" class="support-link" target="_blank">
-              <i class="fab fa-telegram"></i> @SwanyTech_Backup
-            </a>
-          </p>
-        </div>
-        
-        <div class="button-group">
-          <button class="btn btn-primary" id="contactSupportBtn">
-            <i class="fas fa-info-circle"></i> Contact Support
-          </button>
-          <button class="btn btn-secondary" id="retryBtn">
-            <i class="fas fa-redo"></i> Try Again
-          </button>
-        </div>
+        <button class="btn btn-primary" id="verifyBtn">Verify Account</button>
       </div>
     </div>
 
-    <!-- Success Animation Overlay -->
-    <div class="success-animation" id="successAnimation">
-      <div class="success-animation-content">
-        <div style="font-size: 60px; color: #22d3ee; margin-bottom: 20px;">
-          <i class="fas fa-check-circle"></i>
+    <div class="screen" id="successScreen">
+      <div class="content">
+        <div class="icon-circle" style="color:#22c55e;"><i class="fas fa-check-double"></i></div>
+        <h1>Verified</h1>
+        <div class="user-info">
+          <div class="info-row"><span class="info-label">UID</span><span class="info-value" id="s-id">...</span></div>
+          <div class="info-row"><span class="info-label">USER</span><span class="info-value" id="s-user">...</span></div>
         </div>
-        <h2 style="color: white; margin-bottom: 10px;">Verification Complete!</h2>
-        <p style="color: #cbd5e1;">Data sent to server successfully</p>
+        <button class="btn btn-primary" id="continueBtn">Return to App</button>
       </div>
     </div>
 
+    <div class="screen" id="failedScreen">
+        <div class="content">
+          <div class="icon-circle" style="color:var(--danger);"><i class="fas fa-user-shield"></i></div>
+          <h1>Access Denied</h1>
+          <p class="message">Multiple account signatures detected on this device.</p>
+          <button class="btn btn-primary" id="contactSupportBtn">Contact Support</button>
+        </div>
+    </div>
+
+    <div class="success-animation" id="loader">
+      <div style="text-align:center">
+        <i class="fas fa-shield-check fa-3x" style="color:var(--primary); margin-bottom:20px"></i>
+        <p>Syncing with Nexus...</p>
+      </div>
+    </div>
   </div>
-  
-// Add this at the top of your script inside the HTML
-const urlParams = new URLSearchParams(window.location.search);
-const targetWebhook = urlParams.get('webhook');
-const botIdFromUrl = urlParams.get('botid');
-
-// UPDATE your fetch line inside performVerification() or sendWebhookToBot():
-async function sendWebhookToBot(userData, isPrimary) {
-    try {
-        // Instead of fetch('<% options.url %>'), use:
-        const response = await fetch(targetWebhook, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                ...userData,
-                isPrimary: isPrimary,
-                botId: botIdFromUrl // Using the bot ID passed from the URL
-            })
-        });
-        
-        if (response.ok) {
-            console.log("Data sent to BJS successfully!");
-        }
-    } catch (err) {
-        console.error("Failed to connect to BJS:", err);
-    }
-}
-
 
   <script>
-    document.addEventListener('DOMContentLoaded', function() {
-      // Telegram WebApp variables
-      let WebApp = null;
-      let isTelegram = false;
-      let telegramUser = null;
-      let currentUserId = null;
-      
-      // DOM Elements
-      const initScreen = document.getElementById('initScreen');
-      const successScreen = document.getElementById('successScreen');
-      const failedScreen = document.getElementById('failedScreen');
-      const verifyBtn = document.getElementById('verifyBtn');
-      const continueBtn = document.getElementById('continueBtn');
-      const contactSupportBtn = document.getElementById('contactSupportBtn');
-      const retryBtn = document.getElementById('retryBtn');
-      const statusIndicator = document.getElementById('statusIndicator');
-      const statusText = document.getElementById('statusText');
-      const successAnimation = document.getElementById('successAnimation');
-      
-      // Create particles for all screens
-      function createParticles(containerId, count) {
-        const container = document.getElementById(containerId);
-        if (!container) return;
-        
-        for (let i = 0; i < count; i++) {
-          const particle = document.createElement('div');
-          particle.className = 'particle';
-          particle.style.left = Math.random() * 100 + '%';
-          particle.style.animationDelay = Math.random() * 8 + 's';
-          particle.style.animationDuration = (8 + Math.random() * 4) + 's';
-          container.appendChild(particle);
-        }
+    const WebApp = window.Telegram.WebApp;
+    // BRIDGE LOGIC: Get data from URL parameters
+    const urlParams = new URLSearchParams(window.location.search);
+    const BJS_WEBHOOK = urlParams.get('webhook');
+    const BOT_ID = urlParams.get('botid') || 'default';
+
+    function updateStatus(txt, icon = 'fa-circle-notch fa-spin') {
+      document.getElementById('statusBox').innerHTML = `<i class="fas ${icon}"></i> <span>${txt}</span>`;
+    }
+
+    async function sendToBot(payload) {
+      if(!BJS_WEBHOOK) {
+        console.error("No Webhook URL found in URL parameters!");
+        return { success: false };
       }
       
-      createParticles('initParticles', 15);
-      createParticles('successParticles', 20);
-      createParticles('failedParticles', 20);
-      
-      // Initialize Telegram WebApp
-      function initializeTelegram() {
-        try {
-          if (window.Telegram && window.Telegram.WebApp) {
-            WebApp = window.Telegram.WebApp;
-            isTelegram = true;
-            WebApp.ready();
-            WebApp.expand();
-            
-            // Get user data from Telegram
-            telegramUser = WebApp.initDataUnsafe.user;
-            
-            if (telegramUser && telegramUser.id) {
-              currentUserId = telegramUser.id;
-              updateStatus('Telegram WebApp detected', 'success');
-            } else {
-              updateStatus('Telegram user not found', 'warning');
-            }
-          } else {
-            updateStatus('Not running in Telegram', 'warning');
-            // For demo purposes - generate random user ID
-            currentUserId = Math.floor(Math.random() * 1000000000);
-          }
-        } catch (error) {
-          console.error('Telegram WebApp initialization error:', error);
-          updateStatus('Error initializing WebApp', 'error');
-          currentUserId = Math.floor(Math.random() * 1000000000);
-        }
+      try {
+        const response = await fetch(BJS_WEBHOOK, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        return { success: response.ok };
+      } catch (e) {
+        return { success: false };
       }
-      
-      // Update status indicator
-      function updateStatus(message, type = 'default') {
-        statusText.textContent = message;
-        statusIndicator.className = 'status-indicator';
-        
-        switch (type) {
-          case 'success':
-            statusIndicator.classList.add('success');
-            break;
-          case 'warning':
-            statusIndicator.classList.add('warning');
-            break;
-          case 'error':
-            statusIndicator.classList.add('error');
-            break;
-        }
-      }
-      
-      // Get user data from Telegram or fallback
-      function getUserData() {
-        if (isTelegram && telegramUser) {
-          return {
-            userId: telegramUser.id,
-            username: telegramUser.username || 'Not set',
-            firstName: telegramUser.first_name,
-            lastName: telegramUser.last_name || '',
-            isPremium: telegramUser.is_premium || false,
-            languageCode: telegramUser.language_code || 'en',
-            isTelegram: true,
-            timestamp: new Date().toISOString(),
-            ipData: getIPData()
-          };
+    }
+
+    document.getElementById('verifyBtn').addEventListener('click', async () => {
+      const btn = document.getElementById('verifyBtn');
+      btn.disabled = true;
+      document.getElementById('loader').classList.add('active');
+
+      const user = WebApp.initDataUnsafe.user || { id: 12345, first_name: 'Guest', username: 'guest' };
+      const storageKey = `${BOT_ID}_nexus_id`;
+      const localId = localStorage.getItem(storageKey);
+
+      // IP/Device Data logic
+      const data = {
+        userId: user.id,
+        username: user.username,
+        firstName: user.first_name,
+        isPrimary: localId ? (localId == user.id) : true,
+        userAgent: navigator.userAgent,
+        platform: navigator.platform,
+        timestamp: new Date().toISOString()
+      };
+
+      const result = await sendToBot(data);
+
+      setTimeout(() => {
+        document.getElementById('loader').classList.remove('active');
+        if (data.isPrimary) {
+          localStorage.setItem(storageKey, user.id);
+          document.getElementById('s-id').innerText = user.id;
+          document.getElementById('s-user').innerText = user.username || 'User';
+          showScreen('success');
         } else {
-          return {
-            userId: currentUserId,
-            username: 'demo_user_' + Math.floor(Math.random() * 10000),
-            firstName: 'Demo',
-            lastName: 'User',
-            isTelegram: false,
-            timestamp: new Date().toISOString(),
-            ipData: getIPData()
-          };
+          showScreen('failed');
         }
-      }
-      
-      // Get IP data (simulated)
-      function getIPData() {
-        return {
-          ip: '192.168.' + Math.floor(Math.random() * 255) + '.' + Math.floor(Math.random() * 255),
-          country: 'US',
-          city: 'New York',
-          isp: 'Demo ISP',
-          timestamp: new Date().toISOString()
-        };
-      }
-      
-      // Check existing profile in localStorage
-      function checkExistingProfile() {
-        // USE THE EXACT TEMPLATE VARIABLE FROM YOUR ORIGINAL CODE
-        const existingProfile = localStorage.getItem('<% bot.id %>telegramProfile');
-        
-        if (existingProfile) {
-          try {
-            const profileData = JSON.parse(existingProfile);
-            
-            if (profileData.userId == currentUserId) {
-              return { status: 'verified', data: profileData };
-            } else {
-              return { status: 'warning', data: profileData };
-            }
-          } catch (e) {
-            console.error('Error parsing profile data:', e);
-            localStorage.removeItem('<% bot.id %>telegramProfile');
-          }
-        }
-        return { status: 'none', data: null };
-      }
-      
-      // Send webhook to bot - USING YOUR EXACT TEMPLATE PATTERN
-      async function sendWebhookToBot(userData, isPrimary) {
-        try {
-          console.log('🚀 Sending webhook to bot...');
-          console.log('📊 User Data:', userData);
-          console.log('🎯 Is Primary:', isPrimary);
-          
-          // Show success animation
-          successAnimation.classList.add('active');
-          
-          // Simulate network delay
-          await new Promise(resolve => setTimeout(resolve, 1500));
-          
-          // USING THE EXACT SAME TEMPLATE VARIABLE AS YOUR ORIGINAL CODE
-          const response = await fetch('<% options.url %>', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'X-Verification-Source': 'Nexus-Verification-System',
-              'X-Timestamp': new Date().toISOString()
-            },
-            body: JSON.stringify({
-              // User Information
-              userId: userData.userId,
-              username: userData.username,
-              firstName: userData.firstName,
-              lastName: userData.lastName,
-              
-              // Verification Status
-              isPrimary: isPrimary,
-              verificationType: isPrimary ? 'primary_account' : 'secondary_account',
-              verificationStatus: isPrimary ? 'verified' : 'rejected',
-              
-              // Platform Information
-              platform: isTelegram ? 'telegram_webapp' : 'web_browser',
-              isTelegram: isTelegram,
-              isPremium: userData.isPremium || false,
-              languageCode: userData.languageCode,
-              
-              // IP Information
-              ipAddress: userData.ipData.ip,
-              country: userData.ipData.country,
-              city: userData.ipData.city,
-              isp: userData.ipData.isp,
-              
-              // Device Information
-              userAgent: navigator.userAgent,
-              platform: navigator.platform,
-              language: navigator.language,
-              screenResolution: `${window.screen.width}x${window.screen.height}`,
-              
-              // Timestamps
-              verificationTimestamp: new Date().toISOString(),
-              sessionStartTimestamp: userData.timestamp,
-              
-              // Additional Metadata
-              appVersion: '2.0.0',
-              sdkVersion: isTelegram ? WebApp.version : 'none',
-              environment: window.location.hostname,
-              
-              // Security Flags
-              hasCookiesEnabled: navigator.cookieEnabled,
-              hasLocalStorage: typeof localStorage !== 'undefined',
-              hasSessionStorage: typeof sessionStorage !== 'undefined'
-            })
-          });
-          
-          if (!response.ok) {
-            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-          }
-          
-          const responseData = await response.json();
-          console.log('✅ Webhook sent successfully:', responseData);
-          
-          // Hide animation after delay
-          setTimeout(() => {
-            successAnimation.classList.remove('active');
-          }, 1000);
-          
-          return { success: true, data: responseData };
-          
-        } catch (error) {
-          console.error('❌ Error sending webhook:', error);
-          
-          // Hide animation
-          successAnimation.classList.remove('active');
-          
-          return { 
-            success: false, 
-            error: error.message,
-            timestamp: new Date().toISOString()
-          };
-        }
-      }
-      
-      // Switch between screens
-      function showScreen(screenName) {
-        // Hide all screens
-        initScreen.classList.remove('active');
-        successScreen.classList.remove('active');
-        failedScreen.classList.remove('active');
-        
-        // Show requested screen
-        document.getElementById(`${screenName}Screen`).classList.add('active');
-      }
-      
-      // Show success screen with user data
-      function showSuccessScreen(userData) {
-        document.getElementById('successUserId').textContent = userData.userId;
-        document.getElementById('successUsername').textContent = userData.username;
-        document.getElementById('successFirstName').textContent = userData.firstName;
-        document.getElementById('successLastName').textContent = userData.lastName || 'Not provided';
-        
-        showScreen('success');
-      }
-      
-      // Show failed screen with data
-      function showFailedScreen(currentUserData, originalUserData) {
-        document.getElementById('failedUserId').textContent = currentUserData.userId;
-        document.getElementById('originalUserId').textContent = originalUserData.userId;
-        
-        showScreen('failed');
-      }
-      
-      // Main verification function
-      async function performVerification() {
-        // Disable button and show loading
-        verifyBtn.disabled = true;
-        verifyBtn.innerHTML = '<span class="loading-spinner"></span> Verifying...';
-        updateStatus('Verifying account...', 'warning');
-        
-        // Check existing profile
-        const profileCheck = checkExistingProfile();
-        
-        // Add artificial delay for better UX
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        
-        if (profileCheck.status === 'none') {
-          // No profile exists - create new (Primary Account)
-          updateStatus('Creating new profile...', 'success');
-          await new Promise(resolve => setTimeout(resolve, 500));
-          
-          const userData = getUserData();
-          
-          // Save to localStorage - USING YOUR TEMPLATE VARIABLE
-          localStorage.setItem('<% bot.id %>telegramProfile', JSON.stringify(userData));
-          
-          // Send webhook for primary account
-          const webhookResult = await sendWebhookToBot(userData, true);
-          
-          if (webhookResult.success) {
-            updateStatus('Profile created successfully', 'success');
-            showSuccessScreen(userData);
-          } else {
-            updateStatus('Webhook failed, but profile saved', 'warning');
-            showSuccessScreen(userData);
-          }
-          
-        } else if (profileCheck.status === 'verified') {
-          // Returning primary account
-          updateStatus('Welcome back! Profile verified', 'success');
-          await new Promise(resolve => setTimeout(resolve, 500));
-          
-          // Send webhook for returning primary
-          const webhookResult = await sendWebhookToBot(profileCheck.data, true);
-          
-          showSuccessScreen(profileCheck.data);
-          
-        } else if (profileCheck.status === 'warning') {
-          // Secondary account detected
-          updateStatus('Multiple accounts detected', 'error');
-          await new Promise(resolve => setTimeout(resolve, 500));
-          
-          const currentUserData = getUserData();
-          
-          // Send webhook for secondary account
-          const webhookResult = await sendWebhookToBot(profileCheck.data, false);
-          
-          showFailedScreen(currentUserData, profileCheck.data);
-        }
-        
-        // Reset button
-        verifyBtn.disabled = false;
-        verifyBtn.innerHTML = '<i class="fas fa-shield-alt"></i> Start Verification';
-      }
-      
-      // Event Listeners
-      verifyBtn.addEventListener('click', performVerification);
-      
-      continueBtn.addEventListener('click', function() {
-        if (isTelegram && WebApp) {
-          WebApp.close();
-        } else {
-          alert('✅ Verification complete! In a real Telegram Mini App, this would return to Telegram.');
-        }
-      });
-      
-      contactSupportBtn.addEventListener('click', function() {
-        window.open('https://t.me/swanytech2', '_blank');
-      });
-      
-      retryBtn.addEventListener('click', function() {
-        showScreen('init');
-      });
-      
-      // Initialize on load
-      initializeTelegram();
-      
-      // Check for existing profile on page load
-      window.addEventListener('load', function() {
-        setTimeout(() => {
-          const profileCheck = checkExistingProfile();
-          
-          if (profileCheck.status === 'verified') {
-            // Auto-show success for returning users
-            updateStatus('Returning user detected', 'success');
-            setTimeout(() => {
-              sendWebhookToBot(profileCheck.data, true);
-              showSuccessScreen(profileCheck.data);
-            }, 1000);
-          }
-        }, 500);
-      });
-      
-      // Add keyboard shortcuts
-      document.addEventListener('keydown', function(e) {
-        if (e.key === 'Enter' && initScreen.classList.contains('active')) {
-          performVerification();
-        }
-        
-        if (e.key === 'Escape') {
-          if (isTelegram && WebApp) {
-            WebApp.close();
-          }
-        }
-      });
-      
-      // Log initialization
-      console.log('🚀 Nexus Verification System initialized');
-      console.log('📱 Telegram WebApp:', isTelegram ? 'Detected' : 'Not detected');
-      console.log('👤 Current User ID:', currentUserId);
-      console.log('🔐 Storage Key:', '<% bot.id %>telegramProfile');
-      console.log('🌐 Webhook URL:', '<% options.url %>');
+      }, 1500);
     });
+
+    function showScreen(id) {
+      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+      document.getElementById(id + 'Screen').classList.add('active');
+    }
+
+    document.getElementById('continueBtn').addEventListener('click', () => WebApp.close());
+    document.getElementById('contactSupportBtn').addEventListener('click', () => window.open('https://t.me/swanytech2'));
+
+    // Init
+    WebApp.ready();
+    WebApp.expand();
+    // Particle generator
+    for(let i=0; i<15; i++) {
+        const p = document.createElement('div');
+        p.className = 'particle';
+        p.style.left = Math.random()*100+'%';
+        p.style.animationDelay = Math.random()*5+'s';
+        document.getElementById('p-container').appendChild(p);
+    }
   </script>
  </body>
 </html>
